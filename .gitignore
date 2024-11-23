@@ -1,0 +1,10 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+/Special/Software Project Design and Development/Lab Project/DICOMViwer/.vs/DICOMViwer/v17
+/Special/Software Project Design and Development/Lab Project/DICOMViwer/.vs/DICOMViwer/FileContentIndex
+/Special/Software Project Design and Development/Lab Project/DICOMViwer/ViwerWebApp/bin/Debug/net8.0
+/Special/Software Project Design and Development/Lab Project/DICOMViwer/ViwerWebApp/obj
+*.user
