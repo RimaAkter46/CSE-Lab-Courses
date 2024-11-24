@@ -1,0 +1,84 @@
+﻿@page "/human"
+
+<h5>Human Puzzle Game Created By Rima Akter</h5>
+<img src="/images/human.jpg" alt="Original Image" class="org-img" />
+
+<div class="puzzle-grid">
+    @foreach (var tile in tiles)
+    {
+        <button class="tile" @onclick="() => MoveTile(tile)">
+            @if (tile != "empty")
+            {
+                <img src="@tile" alt="Animal Tile" />
+            }
+        </button>
+    }
+</div>
+
+@if (IsSolved)
+{
+    <div class="message">
+        <h4>Congratulations! You solved the puzzle!</h4>
+        <button @onclick="ResetGame">Play Again</button>
+    </div>
+}
+
+@code {
+
+    
+
+    private List<string> tiles = new List<string>();
+    private int emptyTileIndex = 0;
+    private bool IsSolved => !tiles.Where((tile, index) => tile != (index < 15 ? $"/images/tiles/tile_{index + 1}.png" : "empty")).Any();
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        StartGame();
+    }
+
+    private void StartGame()
+    {
+        tiles = Enumerable.Range(1, 15)
+                          .Select(i => $"/images/tiles/tile_{i}.png")
+                          .ToList();
+        tiles.Add("empty");
+        ShuffleTiles();
+    }
+
+    private void ShuffleTiles()
+    {
+        Random random = new Random();
+        tiles = tiles.OrderBy(x => random.Next()).ToList();
+        emptyTileIndex = tiles.IndexOf("empty");
+    }
+
+    private void MoveTile(string tile)
+    {
+        var tileIndex = tiles.IndexOf(tile);
+        if (IsValidMove(tileIndex))
+        {
+            // Swap tile with empty space
+            tiles[emptyTileIndex] = tile;
+            tiles[tileIndex] = "empty";
+            emptyTileIndex = tileIndex;
+        }
+    }
+
+    private bool IsValidMove(int tileIndex)
+    {
+        // Check if the move is adjacent to the empty tile
+        int row = tileIndex / 4;
+        int col = tileIndex % 4;
+        int emptyRow = emptyTileIndex / 4;
+        int emptyCol = emptyTileIndex % 4;
+
+        return (Math.Abs(row - emptyRow) == 1 && col == emptyCol) ||
+               (Math.Abs(col - emptyCol) == 1 && row == emptyRow);
+    }
+
+    private void ResetGame()
+    {
+        StartGame();
+    }
+}
