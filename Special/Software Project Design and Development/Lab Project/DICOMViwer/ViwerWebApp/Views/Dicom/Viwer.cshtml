@@ -1,0 +1,60 @@
+﻿﻿@{
+    ViewData["Title"] = "Viwer";
+    var patientId = Context.GetRouteValue("id");
+    string actionName = Context.Request.Query["action"].ToString();
+}
+
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div class="panel panel-bd lobidrag">
+                <div class="panel-heading">
+                    <div class="panel-title">
+                        <ul class="toolbars">
+                            <li><span class="control" data-target="zoom" title="Zoom Tool"><i class="fa-solid fa-magnifying-glass-plus"></i></span></li>
+                            <li><span class="control" data-target="pane" title="Pane Tool"><i class="fa-solid fa-solar-panel"></i></span></li>
+                            <li><span class="control" data-target="Length" title="Ruler Tool"><i class="fa-solid fa-ruler"></i></span></li>
+                            <li><span class="control" data-target="magnifying" title="Magnify Tool"><i class="fa-solid fa-magnifying-glass"></i></span></li>
+                            <li><span class="control" data-target="rotate" title="Rotate Tool"><i class="fa-solid fa-rotate-right"></i></span></li>
+                            <li><span class="control" data-target="wwwc" title="WW/WC Tool"><i class="fa-solid fa-up-down-left-right"></i></span></li>
+                            <li><span class="control" data-target="angle" title="Angle Tool"><i class="fa-solid fa-angles-right"></i></span></li>
+                            <li><span class="control" data-target="arrowannotate" title="Arrow Annotate Tool"><i class="fa-solid fa-asterisk"></i></span></li>
+                            <li><span class="control" data-target="EllipticalRoi" title="Elliptical Roi Tool"><i class="fa-regular fa-circle"></i></span></li>
+                            <li><span class="control" data-target="FreehandMouse" title="Free Hand Mouse Tool"><i class="fa-regular fa-hand"></i></span></li>
+                            <li><span class="control" data-target="Probe" title="Probe Tool"><i class="fa-solid fa-circle-notch"></i></span></li>
+                            <li><span class="control" data-target="RectangleRoi" title="Rectangle Roi Tool"><i class="fa-regular fa-rectangle-list"></i></span></li>
+                            <li><span id="spnSaveIcon" title="Format Image Grid"><i class="fa-solid fa-download"></i></span></li>
+                            <li><span id="spnGridController" title="Format Image Grid"><i class="fa-solid fa-border-all"></i></span></li>
+                            <li><span id="spnPatientBack" title="Back"><i class="fa-solid fa-backward-step"></i></span></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="w-100 clearfix viwer-container">
+                                <div class="viwer-area">
+                                    <div class="cornerstone-element" data-index="0" oncontextmenu="return false" id="divViwerWraper"></div>
+                                </div>
+                                <div class="image-list" id="dcmThumbs">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-footer">
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+
+        var patientId = "@patientId";
+        var actionName = "@actionName";
+    </script>
+    <script src="~/js/modules/viwer.js" asp-append-version="true"></script>
+}

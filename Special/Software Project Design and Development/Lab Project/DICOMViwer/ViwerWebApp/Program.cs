@@ -1,7 +1,25 @@
+using FellowOakDicom;
+using FellowOakDicom.Imaging;
+using Microsoft.EntityFrameworkCore;
+using ViwerWebApp.DB;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+
+new DicomSetupBuilder()
+             .RegisterServices(s => s.AddFellowOakDicom().AddImageManager<ImageSharpImageManager>())
+             .SkipValidation()
+             .Build();
+
+builder.Services.AddDbContext<DicomContext>(options =>
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.EnableSensitiveDataLogging();
+    options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+}, ServiceLifetime.Transient);
 
 var app = builder.Build();
 
