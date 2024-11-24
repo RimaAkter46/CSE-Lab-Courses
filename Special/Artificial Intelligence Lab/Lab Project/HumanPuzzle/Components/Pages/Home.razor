@@ -6,7 +6,7 @@
         <button class="tile" @onclick="() => MoveTile(tile)">
             @if (tile != "empty")
             {
-                <img src="@tile" alt="Human Tile" />
+                <img src="@tile" alt="Animal Tile" />
             }
         </button>
     }
@@ -21,14 +21,14 @@
 }
 
 <p>Human Puzzle: By Rima Akter</p>
-<img src="Images/human.jpg" alt="Original Image" class="org-img" />
+<img src="/images/human.jpg" alt="Original Image" class="org-img" />
 @code {
 
 
 
     private List<string> tiles = new List<string>();
     private int emptyTileIndex = 0;
-    private bool IsSolved => !tiles.Where((tile, index) => tile != (index < 15 ? $"Images/tile_{index + 1}.png" : "empty")).Any();
+    private bool IsSolved => !tiles.Where((tile, index) => tile != (index < 15 ? $"/images/tiles/tile_{index + 1}.png" : "empty")).Any();
 
     protected override void OnInitialized()
     {
@@ -39,7 +39,7 @@
     private void StartGame()
     {
         tiles = Enumerable.Range(1, 15)
-                          .Select(i => $"Images/tile_{i}.png")
+                          .Select(i => $"/images/tiles/tile_{i}.png")
                           .ToList();
         tiles.Add("empty");
         ShuffleTiles();
