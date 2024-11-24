@@ -117,7 +117,7 @@ h1:focus {
 .puzzle-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 5px;
+    gap: 0px;
     max-width: 400px;
     margin: auto;
     padding: 10px;
@@ -126,12 +126,13 @@ h1:focus {
 .tile {
     max-width: 90px;
     max-height: 90px;
-    border: 1px solid #ccc;
+    border: 0px solid #ccc;
     background-color: #f9f9f9;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0;
+    gap: 0px;
     cursor: pointer;
 }
 
