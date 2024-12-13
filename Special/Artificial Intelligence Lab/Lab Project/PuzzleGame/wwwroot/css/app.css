@@ -120,12 +120,13 @@ h1:focus {
     gap: 0px;
     max-width: 400px;
     margin: auto;
-    padding: 10px;
+    border: 1px solid #ddd;
 }
 
 .tile {
     max-width: 90px;
-    max-height: 90px;
+    max-height: 120px;
+    height: 120px;
     border: 0px solid #ccc;
     background-color: #f9f9f9;
     display: flex;

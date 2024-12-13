@@ -1,34 +1,66 @@
 ﻿@page "/"
+
 <p>&nbsp;</p>
-<div class="puzzle-grid">
-    @foreach (var tile in tiles)
-    {
-        <button class="tile" @onclick="() => MoveTile(tile)">
-            @if (tile != "empty")
+
+<!-- Button to start the game -->
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12 clearfix">
+            <button class="btn btn-primary" @onclick="ResetGame">Reset Game</button>
+            <button class="btn btn-success float-end" @onclick="SolvePuzzle" disabled="@isSolving">Play With AI</button>
+        </div>
+    </div>
+    <div class="row mt-2 mb-2">
+        <div class="col-12">
+            <div class="puzzle-grid">
+                @foreach (var tile in tiles)
+                {
+                    <button class="tile" @onclick="() => MoveTile(tile)">
+                        @if (tile != "empty")
+                        {
+                            <img src="@tile" alt="Human Tile" />
+                        }
+                    </button>
+                }
+            </div>
+        </div>
+        <div class="col-12">
+            @if (IsSolved)
             {
-                <img src="@tile" alt="Human Tile" />
+                <div class="message">
+                    <h4>Congratulations! You solved the puzzle!</h4>
+                    <button class="btn btn-success" @onclick="ResetGame">Play Again</button>
+                </div>
             }
-        </button>
-    }
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-6">
+            <p>Rima Akter<br/>ID: 1944651029 <br/>Department of CSE<br/>UITS</p>
+        </div>
+        <div class="col-6">
+            <img src="Images/human.jpg" alt="Original Image" class="org-img" />
+        </div>
+    </div>
 </div>
 
-@if (IsSolved)
-{
-    <div class="message">
-        <h4>Congratulations! You solved the puzzle!</h4>
-        <button @onclick="ResetGame">Play Again</button>
-    </div>
-}
 
-<p>Human Puzzle: By Rima Akter</p>
-<img src="Images/human.jpg" alt="Original Image" class="org-img" />
+
 @code {
-
-
-
     private List<string> tiles = new List<string>();
     private int emptyTileIndex = 0;
     private bool IsSolved => !tiles.Where((tile, index) => tile != (index < 15 ? $"Images/tile_{index + 1}.png" : "empty")).Any();
+    private bool gameStarted = false;
+
+    // Flag to track if AI is solving the puzzle
+    private bool isSolving = false;
+
+    // Cancellation token source to cancel the AI-solving process
+    private CancellationTokenSource cancellationTokenSource;
+
+    // Initialize solved state (goal state)
+    private List<string> solvedState;
 
     protected override void OnInitialized()
     {
@@ -36,8 +68,18 @@
         StartGame();
     }
 
+    // Method to start the game
     private void StartGame()
     {
+        gameStarted = true;
+
+        // Initialize solved state (goal state)
+        solvedState = Enumerable.Range(1, 15)
+                                 .Select(i => $"Images/tile_{i}.png")
+                                 .ToList();
+        solvedState.Add("empty");
+
+        // Initialize the tiles and shuffle them
         tiles = Enumerable.Range(1, 15)
                           .Select(i => $"Images/tile_{i}.png")
                           .ToList();
@@ -45,6 +87,7 @@
         ShuffleTiles();
     }
 
+    // Shuffle tiles randomly
     private void ShuffleTiles()
     {
         Random random = new Random();
@@ -52,6 +95,7 @@
         emptyTileIndex = tiles.IndexOf("empty");
     }
 
+    // Move tile if it's adjacent to the empty space
     private void MoveTile(string tile)
     {
         var tileIndex = tiles.IndexOf(tile);
@@ -64,9 +108,9 @@
         }
     }
 
+    // Check if the move is valid (tile is adjacent to the empty space)
     private bool IsValidMove(int tileIndex)
     {
-        // Check if the move is adjacent to the empty tile
         int row = tileIndex / 4;
         int col = tileIndex % 4;
         int emptyRow = emptyTileIndex / 4;
@@ -76,8 +120,203 @@
                (Math.Abs(col - emptyCol) == 1 && row == emptyRow);
     }
 
+    // Reset the game (stop any ongoing AI solving and shuffle tiles)
     private void ResetGame()
     {
+        // If AI is running, cancel the operation
+        if (isSolving)
+        {
+            cancellationTokenSource?.Cancel();
+        }
+
+        // Reset the game state
         StartGame();
+
+        // Enable the Solve button again
+        isSolving = false;
+
+        StateHasChanged(); // Refresh UI
+    }
+
+    // A* Algorithm to solve the puzzle automatically
+    private async void SolvePuzzle()
+    {
+        if (isSolving) return;  // Prevent starting the solving process if it's already running.
+
+        isSolving = true;  // Mark the AI as solving
+
+        // Initialize the cancellation token source
+        cancellationTokenSource = new CancellationTokenSource();
+        var token = cancellationTokenSource.Token;
+
+        // Initialize starting state and goal state
+        var initialState = new List<string>(tiles);
+        var goalState = new List<string>(solvedState);
+
+        // Perform A* search to solve the puzzle
+        await AStarSolve(initialState, goalState, token);
+    }
+
+    // A* solve function
+    private async Task AStarSolve(List<string> initialState, List<string> goalState, CancellationToken token)
+    {
+        var openSet = new SortedDictionary<int, List<PuzzleNode>>();
+        var closedSet = new HashSet<string>();
+        var startNode = new PuzzleNode(initialState, null, 0, GetHeuristic(initialState, goalState));
+
+        // Add the start node to the openSet
+        openSet.Add(startNode.FScore, new List<PuzzleNode> { startNode });
+
+        while (openSet.Count > 0)
+        {
+            // Get the node with the lowest FScore, ensure there's a node to process
+            if (openSet.Values.First().Count == 0)
+            {
+                openSet.Remove(openSet.Keys.First());
+                continue;  // Skip to the next key if the current list is empty
+            }
+
+            var currentNode = openSet.Values.First().First();
+            openSet.Values.First().RemoveAt(0);
+
+            // If we reach the goal state
+            if (currentNode.State.SequenceEqual(goalState))
+            {
+                await ApplyMoves(currentNode);  // Apply moves from goal state to visualize it
+                break;
+            }
+
+            closedSet.Add(string.Join(",", currentNode.State));
+
+            // Find neighbors and apply moves
+            var neighbors = GetValidMoves(currentNode.State, currentNode);
+            foreach (var (newState, move) in neighbors)
+            {
+                if (!closedSet.Contains(string.Join(",", newState)))
+                {
+                    int gScore = currentNode.GScore + 1;
+                    int hScore = GetHeuristic(newState, goalState);
+                    var neighborNode = new PuzzleNode(newState, currentNode, gScore, hScore);
+
+                    // Check if the neighbor is already in openSet
+                    if (openSet.ContainsKey(neighborNode.FScore))
+                    {
+                        openSet[neighborNode.FScore].Add(neighborNode);
+                    }
+                    else
+                    {
+                        openSet.Add(neighborNode.FScore, new List<PuzzleNode> { neighborNode });
+                    }
+                }
+            }
+
+            // Cancel the operation if requested
+            if (token.IsCancellationRequested)
+            {
+                isSolving = false;
+                StateHasChanged();
+                break;
+            }
+
+            StateHasChanged(); // Refresh UI to visualize moves
+            await Task.Delay(500);  // Add a delay for visualization
+        }
+    }
+
+    // Manhattan distance heuristic
+    private int GetHeuristic(List<string> state, List<string> goalState)
+    {
+        int heuristic = 0;
+
+        for (int i = 0; i < state.Count; i++)
+        {
+            if (state[i] != "empty")
+            {
+                int goalIndex = goalState.IndexOf(state[i]);
+                int rowDiff = Math.Abs(i / 4 - goalIndex / 4);
+                int colDiff = Math.Abs(i % 4 - goalIndex % 4);
+                heuristic += rowDiff + colDiff;
+            }
+        }
+
+        return heuristic;
+    }
+
+    // Generate valid neighboring states and apply moves
+    private List<(List<string> state, string move)> GetValidMoves(List<string> currentState, PuzzleNode currentNode)
+    {
+        var neighbors = new List<(List<string>, string)>();
+        int emptyIndex = currentState.IndexOf("empty");
+        int row = emptyIndex / 4;
+        int col = emptyIndex % 4;
+
+        var directions = new (int, int)[] { (-1, 0), (1, 0), (0, -1), (0, 1) };
+
+        foreach (var (dr, dc) in directions)
+        {
+            int newRow = row + dr;
+            int newCol = col + dc;
+
+            if (newRow >= 0 && newRow < 4 && newCol >= 0 && newCol < 4)
+            {
+                int newEmptyIndex = newRow * 4 + newCol;
+                List<string> newState = new List<string>(currentState);
+                (newState[emptyIndex], newState[newEmptyIndex]) = (newState[newEmptyIndex], newState[emptyIndex]);
+
+                // Apply the move directly (visualization happens here)
+                MoveTile(newState[emptyIndex]);
+                StateHasChanged(); // Trigger UI update
+                neighbors.Add((newState, newState[emptyIndex]));  // Save the state after the move
+            }
+        }
+
+        return neighbors;
+    }
+
+    // Apply the list of moves to the game state
+    private async Task ApplyMoves(PuzzleNode goalNode)
+    {
+        var moves = new List<string>();
+        var currentNode = goalNode;
+
+        while (currentNode.Parent != null)
+        {
+            moves.Add(currentNode.Move);
+            currentNode = currentNode.Parent;
+        }
+
+        moves.Reverse();
+
+        foreach (var move in moves)
+        {
+            MoveTile(move);
+            StateHasChanged();
+            await Task.Delay(500);  // Delay for visualization
+
+
+        }
+
+        isSolving = false;
+        StateHasChanged();
+    }
+
+    // PuzzleNode class representing each state of the puzzle
+    private class PuzzleNode
+    {
+        public List<string> State { get; }
+        public PuzzleNode Parent { get; }
+        public int GScore { get; }
+        public int HScore { get; }
+        public int FScore => GScore + HScore;
+        public string Move { get; }
+
+        public PuzzleNode(List<string> state, PuzzleNode parent, int gScore, int hScore)
+        {
+            State = state;
+            Parent = parent;
+            GScore = gScore;
+            HScore = hScore;
+            Move = parent != null ? string.Join(",", state) : "empty";
+        }
     }
 }
